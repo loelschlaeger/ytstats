@@ -1,1 +1,3 @@
 - [ ] stats of individual videos 
+- [ ] stats chess channel (Shazzar)
+- [ ] other channels?

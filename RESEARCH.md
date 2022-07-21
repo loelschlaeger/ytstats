@@ -1,4 +1,4 @@
-- Do viewtimes on educational channels correlate with exam times in Germany?
+- Do viewtimes on educational channels correlate with exam times (in Germany)?
 - When is the best time to upload videos?
 - What seasonal pattern (yearly, weekly) can be observed?
 - How do educational channels differ from entertainment channels?

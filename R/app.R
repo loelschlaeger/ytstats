@@ -1,5 +1,8 @@
 library(shiny)
-library(ggplot2)
+source("modeling.R")
+source("transformation.R")
+source("visualization.R")
+
 
 ui <- fluidPage(
   sidebarLayout(

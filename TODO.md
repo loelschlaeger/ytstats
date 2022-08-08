@@ -1,3 +1,5 @@
 - [x] add data of individual videos to repo
 - [ ] look for data of other channels
-- [ ] finish data preparation code, push to Repo
+- [x] finish data preparation code, push to Repo
+- [ ] rewrite code as functions
+- [ ] add functions to app

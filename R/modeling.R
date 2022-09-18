@@ -1,14 +1,10 @@
-# Load data ---------------------------------------------------------------
-
-source("R/transformation.R")
-
-
 # Load libraries ----------------------------------------------------------
 
+source("R/transformation.R")
 library("forecast")
 
 
-# Functions ---------------------------------------------------------------
+# ARMA model --------------------------------------------------------------
 
 harmonics <- function(time_instants, K, period){
   SIN <- matrix(NA, length(time_instants), K)
@@ -27,7 +23,8 @@ deterministic_cycles <- function(arima_fit,
                                  time_instants = NULL,
                                  K = c(),
                                  period = c()){
-  num_arma_parameters <- 1 + sum(!near(c(fit$model$theta, fit$model$phi), 0)) # assumes arima(..., include.mean = TRUE)
+  # assumes arima(..., include.mean = TRUE)
+  num_arma_parameters <- 1 + sum(!near(c(fit$model$theta, fit$model$phi), 0)) 
   cycle_ts <- vector("list", length(K))
   
   for (i in 1:length(K)){
@@ -51,14 +48,6 @@ deterministic_cycles <- function(arima_fit,
   return(cycle_ts)
 }
 
-# d_cycles <- seasonal_cycles(arima_fit = fit,
-# time_instants = NULL,
-# K = c(3,10),
-# period = c(7,365.25))
-
-
-# ARMA model --------------------------------------------------------------
-
 data_arma <- data %>% 
   mutate(t = row_number(),
          exam_period = wt_a + wt_b + st_a + st_b) %>% 
@@ -68,8 +57,8 @@ data_arma <- data %>%
 xreg <- data_arma %>%
   select(t, exam_period, pandemic, christmas, summer) %>% 
   bind_cols(intercept = rep(1, nrow(data_arma)),
-            harmonics(ts_data$t, K = 3, period = 7),
-            harmonics(ts_data$t, K = 10, period = 365.25)) %>% 
+            harmonics(data_arma$t, K = 3, period = 7),
+            harmonics(data_arma$t, K = 10, period = 365.25)) %>% 
   as.matrix()
 
 fit <- arima(data_arma$h_per_v,
@@ -78,14 +67,12 @@ fit <- arima(data_arma$h_per_v,
              xreg = xreg,
              optim.control = list(maxit = 200))
 
-
-# Transformations ---------------------------------------------------------
-
 d_cycles <- deterministic_cycles(arima_fit = fit,
                                  time_instants = data_arma$t,
                                  K = c(3, 10),
                                  period = c(7, 365.25))
-num_arma_parameters <- sum(!near(c(fit$model$theta, fit$model$phi), 0)) #number of arma parameters w/o intercept
+#number of arma parameters w/o intercept
+num_arma_parameters <- sum(!near(c(fit$model$theta, fit$model$phi), 0))
 bh <- fit$coef[-(1:num_arma_parameters)]
 
 data_arma <- data_arma %>%
@@ -98,72 +85,6 @@ data_arma <- data_arma %>%
   mutate(seasonal_cycle = intercept + cycle_7d + cycle_365d)
 
 
-# Visualize fit ----------------------------------------------------------------------
+# Collect garbage ---------------------------------------------------------
 
-data_arma %>% 
-  ggplot(aes(x = date)) +
-  geom_line(aes(y = h_per_v)) +
-  geom_line(aes(y = arma_fitted), col = "red")
-
-data_arma %>% 
-  ggplot(aes(x = date)) +
-  geom_line(aes(y = h_per_v)) +
-  geom_line(aes(y = arma_fitted_xreg), color = "red")
-
-# Visualise seasonal cycles
-# 7 day cycle
-data_arma %>% 
-  ggplot(aes(x = date)) +
-  geom_line(aes(y = cycle_7d))
-
-# 365 day cycle
-data_arma %>% 
-  ggplot(aes(x = date)) +
-  geom_line(aes(y = cycle_365d))
-
-data_arma %>% 
-  ggplot(aes(x = date)) +
-  geom_line(aes(y = seasonal_cycle))
-
-# One complete cycle only
-data_arma %>% 
-  filter(date %within% lubridate::interval("2020-02-01", "2020-02-07")) %>% 
-  ggplot(aes(x = date)) + 
-  geom_line(aes(y = cycle_7d))
-
-data_arma %>% 
-  filter(date %within% lubridate::interval("2020-02-01", "2021-01-31")) %>% 
-  ggplot(aes(x = date)) + 
-  geom_line(aes(y = cycle_365d))
-
-# Residuals diagnostic plots --------------------------------------------------------
-
-data_arma %>% 
-  ggplot(aes(x = date)) +
-  geom_line(aes(y = arma_residuals)) +
-  geom_hline(yintercept = 0)
-
-# Autocorrelation
-forecast::ggAcf(x = data_arma$arma_residuals) + theme_minimal()
-
-# Normality
-# QQ-Plot against normal distribution
-data_arma %>% 
-  ggplot(aes(sample = arma_residuals)) +
-  geom_qq() +
-  geom_qq_line()
-
-# Histogram and density against normal pdf
-data_arma %>% 
-  ggplot(aes(x = arma_residuals)) +
-  geom_histogram(aes(y = ..density..), bins = 50) +
-  geom_density(color = "red", size = 1) +
-  stat_function(
-    fun = dnorm, 
-    args = list(mean = mean(data_arma$arma_residuals),
-                sd = sd(data_arma$arma_residuals)), 
-    lwd = 1, 
-    col = 'lightblue'
-  ) +
-  theme_minimal()
-
+rm(num_arma_parameters)

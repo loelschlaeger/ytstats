@@ -1,16 +1,13 @@
-# Load data ---------------------------------------------------------------
-
-source("R/reading.R")
-
-
 # Load libraries ----------------------------------------------------------
 
+source("R/reading.R")
 library("magrittr")
 library("tidyr")
 
 
-# Create encoding "book": encoded variables v01, v02, ... -------------------
+# Create encoding book ----------------------------------------------------
 
+# encoded variables v01, v02, ...
 encoding <- viewtime %>% 
   group_by(title) %>% 
   summarise(release = unique(release)) %>% 
@@ -68,10 +65,6 @@ data <- viewtime %>%
     christmas = ( (christmas = (day(date) >= 24)) & (month(date) == 12) ) %>% as.numeric(),
     summer = (month(date) == 8) %>% as.numeric # August low
   )
-
-data %>% mutate() %>% select(date, christmas)
-
-# data %>% filter(date %in% encoding$release)
 
 # Add upload effect dummy variables
 effect_length <- 2 # in weeks

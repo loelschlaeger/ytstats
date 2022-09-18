@@ -1,44 +1,35 @@
-library(shiny)
-source("modeling.R")
-source("transformation.R")
-source("visualization.R")
+# Load libraries ----------------------------------------------------------
 
+source("R/visualization.R")
+library("shiny")
+
+
+# User interface ----------------------------------------------------------
 
 ui <- fluidPage(
-  sidebarLayout(
-    sidebarPanel(
-      fileInput(
-        "file", "Choose CSV File", accept = c(".csv")
-      )
-    ),
-    mainPanel(
-      plotOutput("contents")
-    )
-  )
+  selectInput("dataset", label = "Dataset", choices = ls("package:datasets")),
+  verbatimTextOutput("summary"),
+  tableOutput("table")
 )
 
-server <- function(input, output) {
-  
-  data <- reactive({
-    inFile <- input$file
-    
-    if (is.null(inFile)) 
-      return(NULL)
-    
-    data <- read.csv(inFile$datapath, header = TRUE)
-    
-    data[,1] <- as.Date(data[,1])
-    
-    data
+
+# Server function ---------------------------------------------------------
+
+server <- function(input, output, session) {
+  dataset <- reactive({
+    get(input$dataset, "package:datasets")
   })
   
-  output$contents <- renderPlot({
-    if (!is.null(data())) {
-      
-      plot(data(), type = "l")
-      
-    }
+  output$summary <- renderPrint({
+    summary(dataset())
+  })
+  
+  output$table <- renderTable({
+    dataset()
   })
 }
+
+
+# Create app --------------------------------------------------------------
 
 shinyApp(ui, server)

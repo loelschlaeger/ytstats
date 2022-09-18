@@ -1,12 +1,8 @@
-# Load data ---------------------------------------------------------------
-
-source("R/transformation.R")
-
-
 # Load libraries ----------------------------------------------------------
 
+source("R/modeling.R")
 library("ggplot2")
-#library("readr")
+library("RColorBrewer")
 
 
 # Plot individual video boxplots ------------------------------------------
@@ -14,7 +10,7 @@ library("ggplot2")
 data_long %>% 
   mutate(v_id = factor(v_id, levels = c("h_per_v", paste0("v", 1:30)))) %>% 
   ggplot(aes(x = v_id, y = hours)) +
-  geom_boxplot() +
+  geom_boxplot(na.rm = TRUE) +
   theme_minimal()
 
 
@@ -37,21 +33,18 @@ data_long %>%
   filter(v_id %in% c("v1", "v10", "v20")) %>% 
   mutate(Video = factor(v_id)) %>% 
   ggplot(aes(x = date)) +
-  geom_line(aes(y = hours, color = Video)) +
+  geom_line(aes(y = hours, color = Video), na.rm = TRUE) +
   theme_minimal()
 
-# Indicate month by color -------------------------------------------------
 
-# Monthly colour palette
-library(RColorBrewer)
+# Annual cycle ------------------------------------------------------------
+
 colors <- brewer.pal(n = 12, name = 'Paired')
 months_abbr  <- c("Jan", "Feb", "Mar", "Apr",
                   "May", "Jun", "Jul", "Aug",
                   "Sep", "Oct", "Nov", "Dec")
 names(colors) <- months_abbr
 colors["Nov"] <- "#DDA384"
-
-# Annual cycle ------------------------------------------------------------
 
 # Non-aggregated: Line black, points colored according to months (simple)
 
@@ -66,41 +59,18 @@ data %>%
 # Line coloured according to month
 
 data %>% 
-  select(date, m, hours = v2) %>% 
-  mutate(v_m1  = ifelse(m ==  1, y = hours, n = NA),
-         v_m2  = ifelse(m ==  2, y = hours, n = NA),
-         v_m3  = ifelse(m ==  3, y = hours, n = NA),
-         v_m4  = ifelse(m ==  4, y = hours, n = NA),
-         v_m5  = ifelse(m ==  5, y = hours, n = NA),
-         v_m6  = ifelse(m ==  6, y = hours, n = NA),
-         v_m7  = ifelse(m ==  7, y = hours, n = NA),
-         v_m8  = ifelse(m ==  8, y = hours, n = NA),
-         v_m9  = ifelse(m ==  9, y = hours, n = NA),
-         v_m10 = ifelse(m == 10, y = hours, n = NA),
-         v_m11 = ifelse(m == 11, y = hours, n = NA),
-         v_m12 = ifelse(m == 12, y = hours, n = NA)) %>% 
-  ggplot(aes(x = date)) +
-  geom_line(aes(y = v_m1, color = "Jan")) +
-  geom_line(aes(y = v_m2, color = "Feb")) +
-  geom_line(aes(y = v_m3, color = "Mar")) +
-  geom_line(aes(y = v_m4, color = "Apr")) +
-  geom_line(aes(y = v_m5, color = "May")) +
-  geom_line(aes(y = v_m6, color = "Jun")) +
-  geom_line(aes(y = v_m7, color = "Jul")) +
-  geom_line(aes(y = v_m8, color = "Aug")) +
-  geom_line(aes(y = v_m9, color = "Sep")) +
-  geom_line(aes(y = v_m10, color = "Oct")) +
-  geom_line(aes(y = v_m11, color = "Nov")) +
-  geom_line(aes(y = v_m12, color = "Dec")) +
-  labs(y = "hours", color = "Month") +
+  mutate(month = factor(m, levels = 1:12, labels = months_abbr[1:12])) %>%
+  select(date, month, hours = v2) %>% 
+  ggplot(aes(x = date, y = hours, color = month, group = data.table::rleid(month))) +
+  scale_x_date() +
+  geom_line() +
   scale_color_manual(values = colors)
 
 # Plotting aggregates (monthly)
 
 data_long %>%
   group_by(v_id, y, m) %>%
-  summarize(monthly_hours = sum(hours),
-            time_var = y + (m - 1) / 12) %>% 
+  summarize(monthly_hours = sum(hours), time_var = y + (m - 1) / 12, .groups = "drop") %>% 
   filter(v_id == "h_per_v") %>% 
   ggplot(aes(x = time_var)) +
   geom_line(aes(y = monthly_hours), size = 1.1) +
@@ -123,8 +93,7 @@ data_long %>%
 data %>% 
   select(date, h_per_v) %>% 
   group_by(week = lubridate::floor_date(date, unit = "week", week_start = 1)) %>%
-  summarize(weekly_hours = sum(h_per_v),
-            Month = month(week)) %>% 
+  summarize(weekly_hours = sum(h_per_v), Month = month(week), .groups = "drop") %>% 
   mutate(Month = factor(Month, levels = 1:12, labels = months_abbr)) %>% 
   ggplot(aes(x = week, y = weekly_hours)) +
   geom_bar(aes(fill = Month), stat = "identity") + 
@@ -178,7 +147,7 @@ data_long2 %>%
 
 data_long2 %>% 
   group_by(exam_period, v_id, day_of_week = lubridate::wday(date, week_start = 1)) %>% 
-  summarize(daily_average = mean(hours, na.rm = TRUE)) %>% 
+  summarize(daily_average = mean(hours, na.rm = TRUE), .groups = "drop") %>% 
   ggplot(aes(x = day_of_week)) +
   geom_line(aes(y = daily_average, color = exam_period), size = 1.1) +
   facet_wrap(~ v_id, scales = "free")
@@ -190,7 +159,7 @@ data_long %>%
   select(date, month = m, hours) %>% 
   mutate(day_of_week = wday(date, week_start = 1)) %>% 
   group_by(month, day_of_week) %>% 
-  summarize(mean_hours_per_day = mean(hours)) %>% 
+  summarize(mean_hours_per_day = mean(hours), .groups = "drop") %>% 
   ggplot(aes(x = day_of_week)) + 
   geom_line(aes(y = mean_hours_per_day), size = 1.1) +
   facet_wrap(~ factor(month), scale = "free", labeller = label_both)
@@ -202,7 +171,7 @@ data %>%
   select(date, v1) %>% 
   mutate(date = floor_date(date, unit = "month")) %>% 
   group_by(date) %>% 
-  summarize(monthly_totals = sum(v1)) %>% 
+  summarize(monthly_totals = sum(v1), .groups = "drop") %>% 
   mutate(month = factor(month(date),
                         levels = 1:12,
                         labels = months_abbr),
@@ -220,7 +189,7 @@ data %>%
   select(date, hours = h_per_v) %>% 
   mutate(date = floor_date(date, unit = "month")) %>% 
   group_by(date) %>% 
-  summarize(monthly_totals = sum(hours)) %>% 
+  summarize(monthly_totals = sum(hours), .groups = "drop") %>% 
   mutate(month = month(date),
          year  = factor(year(date))) %>% 
   ggplot(aes(x = month, y = monthly_totals, colour = year)) +
@@ -234,9 +203,79 @@ data %>%
   select(date, hours = h_per_v) %>% 
   mutate(date = floor_date(date, unit = "week", week_start = 1)) %>% 
   group_by(date) %>% 
-  summarize(weekly_totals = sum(hours)) %>% 
+  summarize(weekly_totals = sum(hours), .groups = "drop") %>% 
   mutate(week = week(date),
          year = factor(year(date))) %>% 
   ggplot(aes(x = week, y = weekly_totals, colour = year)) +
   geom_line(size = 1.1) +
   geom_text(aes(label = week)) 
+
+
+# Arma models -------------------------------------------------------------
+
+data_arma %>% 
+  ggplot(aes(x = date)) +
+  geom_line(aes(y = h_per_v)) +
+  geom_line(aes(y = arma_fitted), col = "red")
+
+data_arma %>% 
+  ggplot(aes(x = date)) +
+  geom_line(aes(y = h_per_v)) +
+  geom_line(aes(y = arma_fitted_xreg), color = "red")
+
+# Visualise seasonal cycles
+# 7 day cycle
+data_arma %>% 
+  ggplot(aes(x = date)) +
+  geom_line(aes(y = cycle_7d))
+
+# 365 day cycle
+data_arma %>% 
+  ggplot(aes(x = date)) +
+  geom_line(aes(y = cycle_365d))
+
+data_arma %>% 
+  ggplot(aes(x = date)) +
+  geom_line(aes(y = seasonal_cycle))
+
+# One complete cycle only
+data_arma %>% 
+  filter(date %within% lubridate::interval("2020-02-01", "2020-02-07")) %>% 
+  ggplot(aes(x = date)) + 
+  geom_line(aes(y = cycle_7d))
+
+data_arma %>% 
+  filter(date %within% lubridate::interval("2020-02-01", "2021-01-31")) %>% 
+  ggplot(aes(x = date)) + 
+  geom_line(aes(y = cycle_365d))
+
+# Residuals diagnostic plots --------------------------------------------------------
+
+data_arma %>% 
+  ggplot(aes(x = date)) +
+  geom_line(aes(y = arma_residuals)) +
+  geom_hline(yintercept = 0)
+
+# Autocorrelation
+forecast::ggAcf(x = data_arma$arma_residuals) + theme_minimal()
+
+# Normality
+# QQ-Plot against normal distribution
+data_arma %>% 
+  ggplot(aes(sample = arma_residuals)) +
+  geom_qq() +
+  geom_qq_line()
+
+# Histogram and density against normal pdf
+data_arma %>% 
+  ggplot(aes(x = arma_residuals)) +
+  geom_histogram(aes(y = ..density..), bins = 50) +
+  geom_density(color = "red", size = 1) +
+  stat_function(
+    fun = dnorm, 
+    args = list(mean = mean(data_arma$arma_residuals),
+                sd = sd(data_arma$arma_residuals)), 
+    lwd = 1, 
+    col = 'lightblue'
+  ) +
+  theme_minimal()

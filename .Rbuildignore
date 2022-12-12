@@ -1,1 +1,10 @@
 ^LICENSE\.md$
+^README\.Rmd$
+^RESEARCH\.Rmd$
+^TODO\.Rmd$
+^renv$
+^renv\.lock$
+^.*\.Rproj$
+^\.Rproj\.user$
+^\.github$
+sandbox.R

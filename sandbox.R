@@ -12,3 +12,10 @@ saveRDS(data, "data/data.rds", compress = "xz")
 
 data <- readRDS("data/data.rds")
 
+
+
+
+
+
+
+

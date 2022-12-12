@@ -4,17 +4,18 @@
 #' Use this function to download YouTube Analytics API data.
 #' 
 #' @param email 
-#' A character, the email of the Google account.
+#' A \code{character}, the email of the Google account.
 #' @param from 
-#' The start date for fetching YouTube Analytics data, see details.
+#' A \code{character} in \code{"YYYY-MM-DD"} format, the start date for 
+#' fetching YouTube Analytics data.
+#' By default, \code{Sys.Date() - 10}.
 #' @param to
-#' The end date for fetching YouTube Analytics data, see details.
-#' 
-#' @details
-#' The values for \code{from} and \code{to} should be in YYYY-MM-DD format.
+#' A \code{character} in \code{"YYYY-MM-DD"} format, the end date for 
+#' fetching YouTube Analytics data.
+#' By default, \code{Sys.Date()}.
 #'
 #' @return
-#' A \code{tibble} with 6 columns and a row for each day and video
+#' A \code{tibble} with 6 columns and a row for each day and video:
 #' \describe{
 #'   \item{day}{the date}
 #'   \item{id}{the video id}
@@ -23,9 +24,9 @@
 #'   \item{dislikes}{the number of dislikes}
 #'   \item{viewmins}{the estimated number of minutes watched}
 #' }
-#' The output has the two attributes \code{"channel"} and \code{"videos"}.
 #'
-#' Attribute \code{"channel"} is a list with 5 elements
+#' The output has the two attributes \code{"channel"} and \code{"videos"}.
+#' - Attribute \code{"channel"} is a list with 5 elements:
 #' \describe{
 #'   \item{id}{the channel id}
 #'   \item{title}{the channel title}
@@ -33,9 +34,8 @@
 #'   \item{views}{the total number of views}
 #'   \item{subs}{the total number of subscribers}
 #' }
-#'
-#' Attribute \code{"videos"} is a \code{tibble} with 5 columns and a row for 
-#' each video
+#' - Attribute \code{"videos"} is a \code{tibble} with 5 columns and a row for 
+#' each video:
 #' \describe{
 #'   \item{id}{the video id}
 #'   \item{pub}{the date and time of publication}
@@ -44,37 +44,91 @@
 #'   \item{tn}{the URL to the video thumbnail}
 #' }
 #' 
+#' @importFrom cli cat_bullet
 #' @importFrom rgoogleads gads_auth
-#' @importFrom rytstat ryt_get_channels ryt_get_videos ryt_get_analytics
+#' @importFrom rytstat ryt_token
+#' @importFrom gargle request_build request_retry response_process
+#' @importFrom dplyr %>%
 #' @importFrom dplyr %>% mutate select arrange
-#' @importFrom stringr str_glue
-#' @importFrom cli cli_alert_info
+#'
+#' @export
 
-read_yt <- function(email, from = Sys.Date(), to = from - 10) {
+read_yt <- function(email, from = Sys.Date() - 10, to = Sys.Date()) {
 
   ### authorization for Google Ads account
-  cli::cli_h1("Authorization for Google Ads account")
+  cli::cat_bullet("authorize account")
   rgoogleads::gads_auth(email = email)
+  token <- rytstat::ryt_token()
   
   ### get channel meta data
-  cli::cli_h1("Get channel meta data")
-  channel <- rytstat::ryt_get_channels() %>%
-    dplyr::mutate(
-      id = id,                             # unique channel id
-      title = title,                       # channel title
-      desc = description,                  # channel description
-      views = as.numeric(view_count),      # total views
-      subs = as.numeric(subscriber_count), # total subscribers
-      .keep = "none"
+  cli::cat_bullet("get channel meta data")
+  channel <- list()
+  repeat{
+    out <- gargle::request_build(
+      method = "GET", 
+      params = list(
+        mine = TRUE, 
+        part = "snippet,statistics", 
+        fields = NULL, 
+        maxResults = 5
+      ), 
+      token = token, 
+      path = "youtube/v3/channels", 
+      base_url = "https://www.googleapis.com/"
     ) %>% 
-    as.list()
-  
+      gargle::request_retry(encode = "json") %>%
+      gargle::response_process()
+    channel <- append(channel, list(out$items))
+    if (is.null(out$nextPageToken)) {
+      break
+    }
+  }
+  channel <- list(
+    "id"    = channel$snippet$customUrl,                     # unique channel id
+    "title" = channel$snippet$title,                         # channel title
+    "desc"  = channel$snippet$description,                   # channel description
+    "publ"  = channel$snippet$publishedAt,                   # publication date
+    "views" = as.numeric(channel$statistics$viewCount),      # total views
+    "subs"  = as.numeric(channel$statistics$subscriberCount) # total subscribers
+  )
+
   ### get list of YouTube videos
-  cli::cli_h1("Get list of YouTube videos")
-  videos <- rytstat::ryt_get_videos() %>%
+  cli::cat_bullet("get list of videos")
+  videos <- list()
+  repeat{
+    out <- request_build(
+      method = "GET", 
+      params = list(
+        part = "snippet", 
+        forMine = TRUE, 
+        type = "video", 
+        maxResults = 50
+      ), 
+      token = token, 
+      path = "youtube/v3/search", 
+      base_url = "https://www.googleapis.com/"
+    ) %>%
+      gargle::request_retry(encode = "json") %>%
+      gargle::response_process()
+    videos <- append(videos, list(out$items))
+    if (is.null(out$nextPageToken)) {
+      break
+    }
+  }
+  videos <- tibble(items = videos) %>% 
+    unnest_longer(.data$items) %>% 
+    unnest_wider(.data$items) %>% 
+    unnest_wider(.data$id, names_sep = "_") %>% 
+    unnest_wider(.data$snippet) %>% 
+    unnest_wider(.data$thumbnails, names_sep = "_") %>% 
+    unnest_wider(.data$thumbnails_default, names_sep = "_") %>% 
+    unnest_wider(.data$thumbnails_medium, names_sep = "_") %>% 
+    unnest_wider(.data$thumbnails_high, names_sep = "_") %>% 
+    unnest_wider(.data$thumbnails_standard, names_sep = "_") %>% 
+    unnest_wider(.data$thumbnails_maxres, names_sep = "_") %>%
     dplyr::select(
-      id = id_video_id,                    # unique video id
-      pub = published_at,                  # day and time of video release
+      id = id_videoId,                     # unique video id
+      pub = publishedAt,                   # day and time of video release
       title = title,                       # video title
       desc = description,                  # video description
       tn = thumbnails_standard_url         # url to video thumbnail
@@ -85,16 +139,31 @@ read_yt <- function(email, from = Sys.Date(), to = from - 10) {
     dplyr::arrange(pub)                    # in order of video release
   
   ### get statistics from YouTube Analytics API
-  cli::cli_h1("Get YouTube statistics (can take very long)")
-  data <- rytstat::ryt_get_analytics(
-    start_date = from, 
-    end_date = to,
-    ### https://developers.google.com/youtube/analytics/metrics
-    metrics = c("views", "likes", "dislikes", "estimatedMinutesWatched"),
-    ### https://developers.google.com/youtube/analytics/dimensions
-    dimensions = c("day", "video"),
-    filters = stringr::str_glue("video=={paste(videos$id, collapse=',')}")
-  ) %>%
+  cli::cat_bullet("get video statistics")
+  query <- gargle::request_build(
+    method = "GET", 
+    params = list(
+      startDate = from, 
+      endDate = to, 
+      ids = "channel==MINE", 
+      ### https://developers.google.com/youtube/analytics/dimensions
+      dimensions = "day,video", 
+      filters = stringr::str_glue("video=={paste(videos$id, collapse=',')}"), 
+      ### https://developers.google.com/youtube/analytics/metrics
+      metrics = "views,likes,dislikes,estimatedMinutesWatched"
+    ), 
+    token = ryt_token(), 
+    path = "v2/reports", 
+    base_url = "https://youtubeanalytics.googleapis.com/"
+  ) %>% 
+    gargle::request_retry(encode = "json") %>%
+    gargle::response_process()
+  headers <- query$columnHeaders %>% sapply(`[[`, "name")
+  data <- query$rows %>% 
+    unlist() %>% 
+    matrix(ncol = length(headers), byrow = TRUE) %>%
+    data.frame() %>%
+    rlang::set_names(headers) %>%
     dplyr::select(
       day = day,                           # the day
       id = video,                          # video id
@@ -109,5 +178,5 @@ read_yt <- function(email, from = Sys.Date(), to = from - 10) {
     dplyr::arrange(day)                    # in order of day
   
   ### return data
-  structure(data, channel = channel, videos = videos)
+  structure(data, "channel" = channel, "videos" = videos)
 }

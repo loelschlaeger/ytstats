@@ -8,3 +8,4 @@
 ^\.Rproj\.user$
 ^\.github$
 sandbox.R
+data/data_download_instructions.pdf

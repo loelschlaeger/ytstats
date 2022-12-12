@@ -1,35 +1,41 @@
-# Load libraries ----------------------------------------------------------
+#' Shiny app
+#' 
+#' @description 
+#' TODO
+#' 
+#' @return 
+#' TODO
 
-source("R/visualization.R")
-library("shiny")
-
-
-# User interface ----------------------------------------------------------
-
-ui <- fluidPage(
-  selectInput("dataset", label = "Dataset", choices = ls("package:datasets")),
-  verbatimTextOutput("summary"),
-  tableOutput("table")
-)
+start_app <- function() {
 
 
-# Server function ---------------------------------------------------------
-
-server <- function(input, output, session) {
-  dataset <- reactive({
-    get(input$dataset, "package:datasets")
-  })
+  # User interface --------------------------------------------------------
   
-  output$summary <- renderPrint({
-    summary(dataset())
-  })
+  ui <- fluidPage(
+    selectInput("dataset", label = "Dataset", choices = ls("package:datasets")),
+    verbatimTextOutput("summary"),
+    tableOutput("table")
+  )
+
+
+  # Server function -------------------------------------------------------
+
+  server <- function(input, output, session) {
+    dataset <- reactive({
+      get(input$dataset, "package:datasets")
+    })
+    
+    output$summary <- renderPrint({
+      summary(dataset())
+    })
+    
+    output$table <- renderTable({
+      dataset()
+    })
+  }
+
+  # Create app --------------------------------------------------------------
+
+  shinyApp(ui, server)
   
-  output$table <- renderTable({
-    dataset()
-  })
 }
-
-
-# Create app --------------------------------------------------------------
-
-shinyApp(ui, server)

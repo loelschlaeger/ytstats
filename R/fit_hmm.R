@@ -34,6 +34,23 @@ fit_hmm <- function(data,N){
   list(Gamma = Gamma, delta = delta, mu = mu, sigma = sigma)
 }
 
+#' Simulate HMM
+#' 
+#' @description 
+#' TODO
+#' 
+#' @examples 
+#' \dontrun{
+#'   Gamma <- matrix(c(0.9,0.1,0.1,0.9),nrow=2)
+#'   mu <- c(1,3)
+#'   sigma <- c(0.5,0.5)
+#'   ts <- sim_hmm(T = 100, N = 2, Gamma = Gamma, mu = mu, sigma = sigma)
+#'   model <- fit_hmm(ts, N = 2)
+#'   states <- decode_states(ts, model, N = 2)
+#'   plot(ts, type = "l")
+#'   points(ts, col = states)
+#' }
+
 sim_hmm <- function(T,N,Gamma,mu,sigma){
   delta <- rep(1/N,N)
   s <- rep(0,T)

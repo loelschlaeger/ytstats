@@ -5,6 +5,8 @@
 #' 
 #' @return 
 #' TODO
+#' 
+#' @import shiny
 
 start_app <- function() {
 

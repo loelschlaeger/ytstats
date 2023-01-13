@@ -11,25 +11,28 @@
 #' 
 #' @export 
 
-fit_arma <- function(ytdata) {
+fit_arma <- function(ytdata, ...) {
   
   # Create encoding book ----------------------------------------------------
   
   # encoded variables v01, v02, ...
-  encoding <- viewtime %>% 
-    group_by(title) %>% 
-    summarise(release = unique(release)) %>% 
-    arrange(!is.na(release), release) %>%  
-    mutate(key = paste0("v", 1:30), 
-           n = count(viewtime, video)$n) %>% 
-    relocate(key, n, release, title)
+  # encoding <- viewtime %>% 
+  #   group_by(title) %>% 
+  #   summarise(release = unique(release)) %>% 
+  #   arrange(!is.na(release), release) %>%  
+  #   mutate(key = paste0("v", 1:30), 
+  #          n = count(viewtime, video)$n) %>% 
+  #   relocate(key, n, release, title)
   
+  encoding <- attributes(ytdata)$videos
   
   # Encode titles -----------------------------------------------------------
   
-  viewtime <- inner_join(encoding, viewtime, by = "title") %>%
-    arrange(date, key) %>%  
-    select(key, date, hours)
+  # viewtime <- inner_join(encoding, viewtime, by = "title") %>%
+  #   arrange(date, key) %>%  
+  #   select(key, date, hours)
+  
+  viewtime <- ytdata$viewmins
   
   
   # Replace 0 by NA before release ------------------------------------------
@@ -114,34 +117,6 @@ fit_arma <- function(ytdata) {
     return(harmonics)
   }
   
-  deterministic_cycles <- function(arima_fit, 
-                                   time_instants = NULL,
-                                   K = c(),
-                                   period = c()){
-    # assumes arima(..., include.mean = TRUE)
-    num_arma_parameters <- 1 + sum(!near(c(fit$model$theta, fit$model$phi), 0)) 
-    cycle_ts <- vector("list", length(K))
-    
-    for (i in 1:length(K)){
-      if (is.null(time_instants)){
-        seasonal_cycle <- harmonics(1:period[i], K[i], period[i])
-      } else if (is.vector(time_instants)){
-        seasonal_cycle <- harmonics(time_instants, K[i], period[i])
-      }
-      
-      bh <- arima_fit$coef[-(1:num_arma_parameters)]
-      
-      if (i == 1){
-        bh <- bh[1:(2 * K[1])]
-      } else {
-        num_par_previous_K <- 2 * sum(K[1:(i-1)])
-        num_par_current_K <- 2 * sum(K[1:i])
-        bh <- bh[(num_par_previous_K + 1):num_par_current_K]
-      }
-      cycle_ts[[i]] <- drop(seasonal_cycle %*% bh)
-    }
-    return(cycle_ts)
-  }
   
   data_arma <- data %>% 
     mutate(t = row_number(),
@@ -162,6 +137,7 @@ fit_arma <- function(ytdata) {
                xreg = xreg,
                optim.control = list(maxit = 200))
   
+  ### function `deterministic_cycles` in `utils.R`
   d_cycles <- deterministic_cycles(arima_fit = fit,
                                    time_instants = data_arma$t,
                                    K = c(3, 10),

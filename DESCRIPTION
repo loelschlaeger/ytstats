@@ -18,6 +18,7 @@ Imports:
     glue,
     lubridate,
     magrittr,
+    pkgload,
     RColorBrewer,
     rgoogleads,
     rytstat,

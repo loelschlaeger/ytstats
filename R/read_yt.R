@@ -21,7 +21,6 @@
 #' @importFrom rgoogleads gads_auth
 #' @importFrom rytstat ryt_token
 #' @importFrom gargle request_build request_retry response_process
-#' @importFrom dplyr %>%
 #' @importFrom dplyr %>% mutate select arrange
 #' @importFrom tidyr unnest_longer unnest_wider
 #' @importFrom tibble as_tibble
@@ -95,12 +94,12 @@ read_yt <- function(email, from = Sys.Date() - 10, to = Sys.Date()) {
     data.frame() %>%
     rlang::set_names(headers) %>%
     dplyr::select(
-      day = day,                         # the day
-      id = video,                        # video id
-      views = views,                     # number of views               
-      likes = likes,                     # number of likes
-      dislikes = dislikes,               # number of dislikes
-      viewmins = estimatedMinutesWatched # number of minutes watched
+      day = day,                           # the day
+      id = video,                          # video id
+      views = views,                       # number of views               
+      likes = likes,                       # number of likes
+      dislikes = dislikes,                 # number of dislikes
+      viewmins = estimatedMinutesWatched   # number of minutes watched
     ) %>% 
     dplyr::mutate(
       day = as.Date(day, format = "%Y-%m-%d"),

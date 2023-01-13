@@ -87,12 +87,12 @@ summary.ytdata <- function(object, ...) {
 
 print.summary.ytdata <- function(x, ...) {
   cat(glue::glue(
-  "Channel title: {x$channel_title}\n",
-  "Total views: {x$total_views}\n",
-  "Total subs: {x$total_subs}\n",
-  "Number videos: {x$number_videos}\n",
-  "First observation: {x$obs_start}\n",
-  "Last observation: {x$obs_end}\n"
+    "Channel title: {x$channel_title}\n",
+    "Total views: {x$total_views}\n",
+    "Total subs: {x$total_subs}\n",
+    "Number videos: {x$number_videos}\n",
+    "First observation: {x$obs_start}\n",
+    "Last observation: {x$obs_end}\n"
   ))
 }
 

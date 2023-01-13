@@ -14,9 +14,14 @@ saveRDS(data, "data/data.rds", compress = "xz")
 data <- readRDS("data/data.rds")
 print(data)
 summary(data)
+data$day
+attributes(data)$videos
+attributes(data)$channel
 
 
 # HMM application ---------------------------------------------------------
+
+library("dplyr")
 
 ts <- data %>% 
   group_by(day) %>% 

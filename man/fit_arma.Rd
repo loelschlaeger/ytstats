@@ -4,7 +4,7 @@
 \alias{fit_arma}
 \title{Fit an ARMA model}
 \usage{
-fit_arma(ytdata)
+fit_arma(ytdata, ...)
 }
 \arguments{
 \item{ytdata}{An object of class \code{\link{ytdata}}.}

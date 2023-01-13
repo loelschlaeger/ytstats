@@ -1,3 +1,25 @@
+#' Plot
+#' 
+#' @exportS3Method
+#' 
+#' @import ggplot2
+
+plot.ytdata <- function (x, columns, ...) {
+  
+  statistics <- x
+  
+  base_plot <- statistics %>% ggplot(aes(x = day)) + 
+    geom_vline(aes(xintercept = day), color = "red") +
+    theme_minimal()
+  
+  # total viewtime
+  base_plot <- base_plot + geom_line(aes(y = viewmins))
+  
+  print(base_plot)
+}
+
+
+
 plot.ytmodel <- function () {
 
   # Plot individual video boxplots ------------------------------------------

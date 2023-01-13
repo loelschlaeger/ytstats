@@ -21,7 +21,7 @@ nll_hmm <- function(theta.star,x,N){
   return(-l)
 }
 
-fit_hmm <- function(data,N){
+fit_hmm <- function(data,N,sdd){
   theta.star <- c(rep(-2,(N-1)*N),log(seq(1,10,length=N)),log(seq(1,10,length=N)))
   mod <- suppressWarnings(nlm(nll_hmm,theta.star,x=data,N=N))
   theta.star <- mod$estimate

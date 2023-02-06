@@ -2,13 +2,10 @@
 % Please edit documentation in R/ytdata.R
 \name{ytdata}
 \alias{ytdata}
-\alias{print.ytdata}
 \alias{summary.ytdata}
 \title{Constructor of a \code{ytdata} object}
 \usage{
 ytdata(data, channel, videos)
-
-\method{print}{ytdata}(x, ...)
 
 \method{summary}{ytdata}(object, ...)
 }
@@ -42,11 +39,9 @@ ytdata(data, channel, videos)
 \item{tn}{the URL to the video thumbnail (\code{character})}
 }}
 
-\item{x}{An object of class \code{\link{ytdata}}.}
+\item{object}{An object of class \code{\link{ytdata}}.}
 
 \item{...}{Currently not used.}
-
-\item{object}{An object of class \code{\link{ytdata}}.}
 }
 \value{
 An object of class \code{\link{ytdata}}, which is the input \code{data}

@@ -48,18 +48,6 @@ ytdata <- function(data, channel, videos) {
 }
 
 #' @rdname ytdata
-#' @param x
-#' An object of class \code{\link{ytdata}}.
-#' @param ...
-#' Currently not used.
-#' @exportS3Method 
-#' @importFrom glue glue
-
-print.ytdata <- function(x, ...) {
-  cat(glue::glue("data for YT channel '{attr(data, 'channel')$title}'"))
-}
-
-#' @rdname ytdata
 #' @param object
 #' An object of class \code{\link{ytdata}}.
 #' @param ...

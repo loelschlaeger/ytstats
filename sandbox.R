@@ -1,27 +1,25 @@
 # Read and save YouTube data ----------------------------------------------
 
-data <- read_yt(
+ytdata_example <- read_yt(
   email = "oelschlaeger.lennart@gmail.com",
   from = "2020-01-01",
   to = "2022-09-01"
 )
 
-saveRDS(data, "data/data.rds", compress = "xz")
-
+usethis::use_data(ytdata_example, compress = "xz", overwrite = TRUE)
 
 # Load YouTube data -------------------------------------------------------
 
-data <- readRDS("data/data.rds")
+data <- ytstats::ytdata_example
 print(data)
 summary(data)
-data$day
-attributes(data)$videos
-attributes(data)$channel
-
+attributes(data)$videos  # access video data
+attributes(data)$channel # access channel data
 
 # HMM application ---------------------------------------------------------
 
-library("dplyr")
+library("ggplot2", warn.conflicts = FALSE)
+library("dplyr", warn.conflicts = FALSE)
 
 ts <- data %>% 
   group_by(day) %>% 

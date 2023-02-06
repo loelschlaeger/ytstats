@@ -2,7 +2,6 @@
 
 S3method(plot,ytdata)
 S3method(print,summary.ytdata)
-S3method(print,ytdata)
 S3method(summary,ytdata)
 export(fit_arma)
 export(read_yt)

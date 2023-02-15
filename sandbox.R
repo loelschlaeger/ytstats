@@ -26,7 +26,13 @@ ts <- data %>%
   summarize(x = mean(viewmins)) %>% 
   pull(x) %>% 
   scale(center = FALSE)
-model <- fit_hmm(ts, N = 2)
-states <- decode_states(ts, model, N = 2)
+model <- fit_hmm(ts, N = 3)
+states <- decode_states(ts, model)
+plot(ts, type = "l")
+points(ts, col = states)
+
+ts <- data$likes
+model <- fit_hmm(ts, N = 3)
+states <- decode_states(ts, model)
 plot(ts, type = "l")
 points(ts, col = states)

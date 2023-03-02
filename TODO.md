@@ -1,6 +1,0 @@
-- [x] add data of individual videos to repo
-- [ ] look for data of other channels
-- [x] finish data preparation code, push to Repo
-- [ ] rewrite code as functions
-- [ ] make R package out of code
-- [ ] add functions to app

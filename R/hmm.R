@@ -14,12 +14,15 @@
 #' A \code{character} indicating the type of state-dependent distribution. 
 #' Can be \code{"gaussian"}, \code{"gamma"}, or \code{"poisson"}.
 #'
-#' @return The negative log-likelihood of the observed data.
+#' @return 
+#' The negative log-likelihood of the observed data.
 #'
 #' @examples
-#' theta <- c()
-#' x <- c(1,2,NA,4,5)
-#' ll_hmm(theta = theta, x = x, N = 2, dist = "poisson")
+#' N <- 2
+#' dist <- "poisson"
+#' theta <- sample_theta(N = N, dist = dist)
+#' x <- c(1, 2, NA, 4, 5)
+#' ll_hmm(theta = theta, x = x, N = N, dist = dist)
 #'
 #' @import stats
 #'
@@ -100,15 +103,18 @@ ll_hmm <- function(theta, x, N, dist = "gaussian", neg = FALSE) {
 #' @export
 
 sample_theta <- function(N, dist, restricted = FALSE) {
-  n_params <- N^2 + 3*N
+  
+  ### input checks
+  stopifnot(length(N) == 1, N == as.integer(N), N > 1)
+  stopifnot(length(dist) == 1, dist %in% c("gaussian", "gamma", "poisson"))
+  stopifnot(isTRUE(restricted) || isFALSE(restricted))
+  
+  ### build theta
+  n_params <- N * (N-1) + N + ifelse(dist == "poisson", 0, N)
   theta <- rep(0, n_params)
-  Gamma <- matrix(0, nrow = N, ncol = N)
-  for (i in 1:(N-1)) {
-    Gamma[i, i] <- runif(1, 0, 1)
-    Gamma[i, (i+1):N] <- runif(N-i, 0, 1 - Gamma[i, i])
-  }
-  Gamma[N, ] <- rep(1, N)
-  theta[1:((N - 1) * N)] <- log(Gamma[!diag(N)])
+  Gamma <- matrix(stats::runif(N^2), N, N)
+  Gamma <- Gamma / rowSums(Gamma)
+  theta[1:((N - 1) * N)] <- Gamma[!diag(N)]
   if (dist == "gaussian") {
     mu <- runif(N, mu_range[1], mu_range[2])
     sigma <- runif(N, sigma_range[1], sigma_range[2])
@@ -121,7 +127,7 @@ sample_theta <- function(N, dist, restricted = FALSE) {
     lambda <- runif(N, mu_range[1], mu_range[2])
     theta[(N - 1) * N + 1:N] <- log(lambda)
   } else {
-    stop("Invalid emission distribution type")
+    stop("Invalid state-dependent distribution selected.")
   }
   return(theta)
 }

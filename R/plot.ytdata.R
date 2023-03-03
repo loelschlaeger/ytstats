@@ -25,7 +25,7 @@
 #' @importFrom ggplot2 ggplot aes geom_line scale_x_date theme_minimal
 #' @importFrom rlang .data
 
-plot.ytdata <- function (x, column, from = NA, to = NA, ...) {
+plot.ytdata <- function (x, column, from = NA, to = NA, ...) { # test
   
   stopifnot(
     is.character(column), is.vector(column), length(column) == 1,

@@ -16,23 +16,10 @@ summary(data)
 attributes(data)$videos  # access video data
 attributes(data)$channel # access channel data
 
-# HMM application ---------------------------------------------------------
+# Plot data ---------------------------------------------------------------
 
-library("ggplot2", warn.conflicts = FALSE)
-library("dplyr", warn.conflicts = FALSE)
+plot(data, "views")
+plot(data, "likes")
+plot(data, "dislikes")
+plot(data, "viewmins", from = "2020-01-01", to = "2020-02-01")
 
-ts <- data %>% 
-  group_by(day) %>% 
-  summarize(x = mean(viewmins)) %>% 
-  pull(x) %>% 
-  scale(center = FALSE)
-model <- fit_hmm(ts, N = 3)
-states <- decode_states(ts, model)
-plot(ts, type = "l")
-points(ts, col = states)
-
-ts <- data$likes
-model <- fit_hmm(ts, N = 3)
-states <- decode_states(ts, model)
-plot(ts, type = "l")
-points(ts, col = states)

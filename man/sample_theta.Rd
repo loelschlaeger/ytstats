@@ -4,16 +4,19 @@
 \alias{sample_theta}
 \title{Sample parameter vector}
 \usage{
-sample_theta(N, dist, restricted = FALSE)
+sample_theta(N, dist, x = NULL)
 }
 \arguments{
-\item{N}{An \code{integer}, the number of states in the HMM.}
+\item{N}{An \code{integer}, the number of states. Must be greater or equal 2.}
 
 \item{dist}{A \code{character} indicating the type of state-dependent distribution.
 Can be \code{"gaussian"}, \code{"gamma"}, or \code{"poisson"}.}
+
+\item{x}{A \code{numeric} vector of observed data.}
 }
 \value{
 A \code{numeric} parameter vector.
+It is constrained if \code{constrain = TRUE} and unconstrained otherwise.
 The first \code{N*(N-1)} elements are the off-diagonal transition
 probabilities.
 The next \code{N} elements are the means.
@@ -23,7 +26,11 @@ elements are the standard deviations.
 \description{
 Sample the parameter vector \code{theta} for an HMM.
 }
+\details{
+If the observation vector \code{x} is supplied, means and standard deviations
+are scaled by the first and second order data moments.
+}
 \examples{
-sample_hmm_theta(N = 3, dist = "gamma")
+sample_theta(N = 3, dist = "gamma", x = 1:10)
 
 }

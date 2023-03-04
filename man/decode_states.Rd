@@ -6,6 +6,21 @@
 \usage{
 decode_states(x, theta, dist)
 }
+\arguments{
+\item{x}{A \code{numeric} vector of observed data.}
+
+\item{theta}{A \code{numeric} parameter vector, see \code{\link{sample_theta}}.}
+
+\item{dist}{A \code{character} indicating the type of state-dependent distribution.
+Can be \code{"gaussian"}, \code{"gamma"}, or \code{"poisson"}.}
+}
+\value{
+TODO
+}
 \description{
-Decode HMM states
+TODO
+}
+\examples{
+# TODO
+
 }

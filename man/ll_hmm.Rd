@@ -15,9 +15,11 @@ ll_hmm(theta, x, N, dist = "gaussian", neg = FALSE)
 
 \item{dist}{A \code{character} indicating the type of state-dependent distribution.
 Can be \code{"gaussian"}, \code{"gamma"}, or \code{"poisson"}.}
+
+\item{neg}{Set to \code{TRUE} to return the negative log-likelihood value.}
 }
 \value{
-The negative log-likelihood of the observed data.
+The log-likelihood of the observed data.
 }
 \description{
 Compute the log-likelihood of a Hidden Markov Model with state-dependent

@@ -13,9 +13,11 @@
 #' @param dist 
 #' A \code{character} indicating the type of state-dependent distribution. 
 #' Can be \code{"gaussian"}, \code{"gamma"}, or \code{"poisson"}.
+#' @param neg
+#' Set to \code{TRUE} to return the negative log-likelihood value.
 #'
 #' @return 
-#' The negative log-likelihood of the observed data.
+#' The log-likelihood of the observed data.
 #'
 #' @examples
 #' N <- 2
@@ -318,6 +320,19 @@ simulate_hmm <- function(T, N, theta, dist) {
 }
 
 #' Decode HMM states
+#' 
+#' @description 
+#' TODO
+#' 
+#' @inheritParams ll_hmm
+#' 
+#' @return 
+#' TODO
+#' 
+#' @examples
+#' # TODO
+#' 
+#' @importFrom stats dgamma dnorm dpois
 
 decode_states <- function(x, theta, dist) {
   

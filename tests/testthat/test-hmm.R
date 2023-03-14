@@ -1,4 +1,4 @@
-test_that("theta for HMM log-likelihood function can be sampled", {
+test_that("HMM parameter vector can be sampled", {
   combinations <- expand.grid(
     N = c(2, 4),
     dist = c("gaussian", "gamma", "poisson"),
@@ -14,6 +14,27 @@ test_that("theta for HMM log-likelihood function can be sampled", {
     expect_true(is.vector(theta))
     expected_length <- N * (N-1) + N + ifelse(dist == "poisson", 0, N)
     expect_length(theta, expected_length)
+  }
+})
+
+test_that("HMM data can be simulated", {
+  combinations <- expand.grid(
+    T = c(10, 50),
+    N = c(2, 3),
+    dist = c("gaussian", "gamma", "poisson"),
+    stringsAsFactors = FALSE
+  )
+  for (i in 1:nrow(combinations)) {
+    T <- combinations[i, "T"]
+    N <- combinations[i, "N"]
+    dist <- combinations[i, "dist"]
+    theta <- sample_theta(N = N, dist = dist)
+    out <- simulate_hmm(T = T, N = N, theta = theta, dist = dist)
+    expect_true(is.numeric(out))
+    expect_length(out, T)
+    expect_true(is.numeric(attr(out, "states")))
+    expect_length(attr(out, "states"), T)
+    expect_true(all(attr(out, "states") %in% 1:N))
   }
 })
 
@@ -53,26 +74,20 @@ test_that("HMM parameters can be separated", {
   }
 })
 
-test_that("HMM data can be simulated", {
-  combinations <- expand.grid(
-    T = c(10, 50),
-    N = c(2, 3),
-    dist = c("gaussian", "gamma", "poisson"),
-    stringsAsFactors = FALSE
-  )
-  for (i in 1:nrow(combinations)) {
-    T <- combinations[i, "T"]
-    N <- combinations[i, "N"]
-    dist <- combinations[i, "dist"]
+test_that("HMM mle can be computed", {
+  for (dist in c("gaussian", "gamma", "poisson")) {
+    N <- 2
     theta <- sample_theta(N = N, dist = dist)
-    out <- simulate_hmm(T = T, N = N, theta = theta, dist = dist)
-    expect_true(is.numeric(out))
-    expect_length(out, T)
-    expect_true(is.numeric(attr(out, "states")))
-    expect_length(attr(out, "states"), T)
-    expect_true(all(attr(out, "states") %in% 1:N))
+    x <- simulate_hmm(T = 50, N = N, theta = theta, dist = dist)
+    mle <- mle_hmm(x = x, N = N, dist = dist, runs = 5)
+    expect_true(is.numeric(mle))
+    expect_true(is.vector(mle))
+    expected_length <- N * (N-1) + N + ifelse(dist == "poisson", 0, N)
+    expect_length(mle, expected_length)
   }
 })
+
+
 
 
 

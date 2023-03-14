@@ -23,9 +23,10 @@ Separate parameter vector \code{theta} into transition probability matrix
 and standard deviations \code{sd} (not if \code{dist = "poisson"}).
 }
 \examples{
+\dontrun{
 N <- 2
 dist <- "poisson"
 theta <- sample_theta(N = N, dist = dist)
 separate_theta(theta = theta, N = N, dist = dist)
-
+}
 }

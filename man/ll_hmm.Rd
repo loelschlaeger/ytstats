@@ -22,14 +22,16 @@ Can be \code{"gaussian"}, \code{"gamma"}, or \code{"poisson"}.}
 The log-likelihood of the observed data.
 }
 \description{
-Compute the log-likelihood of a Hidden Markov Model with state-dependent
+Compute the log-likelihood of a Hidden Markov model with state-dependent
 Gaussian, Gamma, or Poisson distributions.
 }
 \examples{
+\dontrun{
 N <- 2
 dist <- "poisson"
 theta <- sample_theta(N = N, dist = dist)
 x <- c(1, 2, NA, 4, 5)
 ll_hmm(theta = theta, x = x, N = N, dist = dist)
+}
 
 }

@@ -2,7 +2,7 @@
 % Please edit documentation in R/hmm.R
 \name{sample_theta}
 \alias{sample_theta}
-\title{Sample parameter vector}
+\title{Sample parameter vector for an HMM}
 \usage{
 sample_theta(N, dist, x = NULL)
 }
@@ -16,7 +16,6 @@ Can be \code{"gaussian"}, \code{"gamma"}, or \code{"poisson"}.}
 }
 \value{
 A \code{numeric} parameter vector.
-It is constrained if \code{constrain = TRUE} and unconstrained otherwise.
 The first \code{N*(N-1)} elements are the off-diagonal transition
 probabilities.
 The next \code{N} elements are the means.
@@ -24,13 +23,15 @@ Only if \code{dist = "gaussian"} or \code{dist = "gamma"}, the next \code{N}
 elements are the standard deviations.
 }
 \description{
-Sample the parameter vector \code{theta} for an HMM.
+Sample the parameter vector \code{theta} for a Hidden Markov model.
 }
 \details{
 If the observation vector \code{x} is supplied, means and standard deviations
 are scaled by the first and second order data moments.
 }
 \examples{
+\dontrun{
 sample_theta(N = 3, dist = "gamma", x = 1:10)
+}
 
 }

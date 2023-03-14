@@ -17,16 +17,19 @@ Can be \code{"gaussian"}, \code{"gamma"}, or \code{"poisson"}.}
 \item{runs}{An \code{integer}, the number of randomly initialized optimization runs.}
 }
 \value{
-TODO
+The estimated parameter vector.
 }
 \description{
-Numerical optimization of the HMM likelihood via \code{\link[stats]{optim}}.
+Numerical optimization of the Hidden Markov model likelihood function via
+\code{\link[stats]{optim}}.
 }
 \examples{
+\dontrun{
 N <- 2
 dist <- "gaussian"
 theta <- sample_theta(N = N, dist = dist)
 x <- simulate_hmm(T = 100, N = N, theta = theta, dist = dist)
-mle_hmm(x = x, N = N, dist = dist, runs = 5)
+mle <- mle_hmm(x = x, N = N, dist = dist, runs = 5)
+}
 
 }

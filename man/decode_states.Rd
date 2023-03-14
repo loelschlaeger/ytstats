@@ -2,9 +2,9 @@
 % Please edit documentation in R/hmm.R
 \name{decode_states}
 \alias{decode_states}
-\title{Decode HMM states}
+\title{Decode HMM state sequence}
 \usage{
-decode_states(x, theta, dist)
+decode_states(x, theta, dist, N)
 }
 \arguments{
 \item{x}{A \code{numeric} vector of observed data.}
@@ -13,14 +13,25 @@ decode_states(x, theta, dist)
 
 \item{dist}{A \code{character} indicating the type of state-dependent distribution.
 Can be \code{"gaussian"}, \code{"gamma"}, or \code{"poisson"}.}
+
+\item{N}{An \code{integer}, the number of states. Must be greater or equal 2.}
 }
 \value{
-TODO
+The decoded state sequence.
 }
 \description{
-TODO
+Global Viterbi decoding of the underlying state sequence of a fitted Hidden
+Markov model.
 }
 \examples{
-# TODO
+\dontrun{
+N <- 2
+dist <- "gamma"
+theta <- sample_theta(N = N, dist = dist)
+x <- simulate_hmm(T = 100, N = N, theta = theta, dist = dist)
+mle <- mle_hmm(x = x, N = N, dist = dist, runs = 5)
+decode_states(x = x, theta = mle, dist = dist, N = N)
+attr(x, "states")
+}
 
 }

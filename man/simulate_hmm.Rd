@@ -21,12 +21,14 @@ A \code{numeric} vector of length \code{T} with observations. The true state
 sequence is available as attribute \code{"states"}.
 }
 \description{
-Simulate time series data from an HMM.
+Simulate time series data from a pre-specified Hidden Markov model.
 }
 \examples{
+\dontrun{
 N <- 2
 dist <- "poisson"
 theta <- sample_theta(N = N, dist = dist)
 simulate_hmm(T = 20, N = N, theta = theta, dist = dist)
+}
 
 }

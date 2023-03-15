@@ -8,6 +8,8 @@
 #' are scaled by the first and second order data moments.
 #'
 #' @inheritParams ll_hmm
+#' @param sort_states
+#' Set to \code{TRUE} to sort the states by their mean.
 #' 
 #' @return 
 #' A \code{numeric} parameter vector. 
@@ -24,13 +26,14 @@
 #'
 #' @importFrom stats sd runif rnorm
 
-sample_theta <- function(N, dist, x = NULL) {
+sample_theta <- function(N, dist, x = NULL, sort_states = TRUE) {
   stopifnot(length(N) == 1, N == as.integer(N), N > 1)
   stopifnot(length(dist) == 1, dist %in% c("gaussian", "gamma", "poisson"))
   stopifnot(is.null(x) || is.numeric(x))
+  stopifnot(isTRUE(sort_states) || isFALSE(sort_states))
   n_params <- N * (N - 1) + N + ifelse(dist == "poisson", 0, N)
   scale <- if (is.null(x)) {
-    c(1, 10) 
+    c(1, 2) 
   } else {
     c(mean(x, na.rm = TRUE), stats::sd(x, na.rm = TRUE))
   }
@@ -40,14 +43,17 @@ sample_theta <- function(N, dist, x = NULL) {
   theta[1:((N - 1) * N)] <- Gamma[row(Gamma) != col(Gamma)]
   if (dist == "gaussian") {
     mu <- stats::rnorm(N, mean = scale[1], sd = scale[2])
+    if (sort_states) mu <- sort(mu)
     sigma <- stats::runif(N, 0, 1) * scale[2]
     theta[(N - 1) * N + 1:(2 * N)] <- c(mu, sigma)
   } else if (dist == "gamma") {
     mu <- abs(stats::rnorm(N, mean = scale[1], sd = scale[2]))
+    if (sort_states) mu <- sort(mu)
     sigma <- stats::runif(N, min = 0, max = 1) * scale[2]
     theta[(N - 1) * N + 1:(2 * N)] <- c(mu, sigma)
   } else if (dist == "poisson") {
     lambda <- stats::runif(N, min = 0, max = 1) * scale[2]
+    if (sort_states) lambda <- sort(lambda)
     theta[(N - 1) * N + 1:N] <- lambda
   }
   return(theta)
@@ -142,37 +148,38 @@ simulate_hmm <- function(T, N, theta, dist) {
 #'
 #' @importFrom stats dnorm dgamma dpois
 
-ll_hmm <- function(theta, x, N, dist = "gaussian", neg = FALSE) {
+ll_hmm <- function(theta, x, N, dist, neg = FALSE) {
   stopifnot(is.numeric(x))
   stopifnot(length(N) == 1, N == as.integer(N), N > 1)
   stopifnot(length(dist) == 1, dist %in% c("gaussian", "gamma", "poisson"))
   stopifnot(is.numeric(theta), is.vector(theta))
   stopifnot(length(theta) == N * (N-1) + N + ifelse(dist == "poisson", 0, N))
   stopifnot(isTRUE(neg) || isFALSE(neg))
+  T <- length(x)
   Gamma <- diag(N)
   Gamma[!Gamma] <- theta[1:((N - 1) * N)]
-  Gamma <- Gamma / rowSums(Gamma)
+  diag(Gamma) <- 2 - rowSums(Gamma)
   delta <- solve(t(diag(N) - Gamma + 1), rep(1, N))
-  probs <- matrix(NA_real_, nrow = length(x), ncol = N)
+  probs <- matrix(NA_real_, nrow = T, ncol = N)
   if (dist == "gaussian") {
     mu <- theta[(N - 1) * N + 1:N]
     sigma <- theta[(N - 1) * N + (N + 1):(2 * N)]
-    for (j in 1:N) {
-      probs[, j] <- stats::dnorm(x, mean = mu[j], sd = sigma[j])
+    for (n in 1:N) {
+      probs[, n] <- stats::dnorm(x, mean = mu[n], sd = sigma[n])
     }
   } else if (dist == "gamma") {
     mu <- theta[(N - 1) * N + 1:N]
     sigma <- theta[(N - 1) * N + (N + 1):(2 * N)]
-    for (j in 1:N) {
-      probs[, j] <- stats::dgamma(
-        x, shape = mu[j]^2 / sigma[j]^2, scale = sigma[j]^2 / mu[j]
+    for (n in 1:N) {
+      probs[, n] <- stats::dgamma(
+        x, shape = mu[n]^2 / sigma[n]^2, scale = sigma[n]^2 / mu[n]
       )
     }
     probs[x <= 0, ] <- 1
   } else if (dist == "poisson") {
     lambda <- theta[(N - 1) * N + 1:N]
-    for (j in 1:N) {
-      probs[, j] <- stats::dpois(x, lambda[j])
+    for (n in 1:N) {
+      probs[, n] <- stats::dpois(x, lambda[n])
     }
     probs[x < 0, ] <- 1
   }
@@ -180,7 +187,7 @@ ll_hmm <- function(theta, x, N, dist = "gaussian", neg = FALSE) {
   foo <- delta * probs[1, ]
   phi <- foo / sum(foo)
   ll <- log(sum(foo))
-  for (t in 2:length(x)) {
+  for (t in 2:T) {
     foo <- phi %*% Gamma * probs[t, ]
     ll <- ll + log(sum(foo))
     phi <- foo / sum(foo)
@@ -196,6 +203,7 @@ ll_hmm <- function(theta, x, N, dist = "gaussian", neg = FALSE) {
 #' and standard deviations \code{sd} (not if \code{dist = "poisson"}).
 #' 
 #' @inheritParams ll_hmm
+#' @inheritParams sample_theta
 #' 
 #' @return 
 #' A \code{list} of parameters.
@@ -208,20 +216,27 @@ ll_hmm <- function(theta, x, N, dist = "gaussian", neg = FALSE) {
 #' separate_theta(theta = theta, N = N, dist = dist)
 #' }
 
-separate_theta <- function(theta, N, dist) {
+separate_theta <- function(theta, N, dist, sort_theta = TRUE) {
   stopifnot(length(N) == 1, N == as.integer(N), N > 1)
   stopifnot(length(dist) == 1, dist %in% c("gaussian", "gamma", "poisson"))
   stopifnot(is.numeric(theta), is.vector(theta))
   stopifnot(length(theta) == N * (N-1) + N + ifelse(dist == "poisson", 0, N))
+  stopifnot(isTRUE(sort_theta) || isFALSE(sort_theta))
   Gamma <- diag(N)
   Gamma[!Gamma] <- theta[1:((N - 1) * N)]
-  Gamma <- Gamma / rowSums(Gamma)
+  diag(Gamma) <- 2 - rowSums(Gamma)
   delta <- solve(t(diag(N) - Gamma + 1), rep(1, N))
   mean <- theta[(N - 1) * N + 1:N]
   if (identical(dist, "poisson")) {
     sd <- NULL
   } else {
     sd <- theta[(N - 1) * N + (N + 1):(2 * N)]
+  }
+  if (sort_theta) {
+    permut <- diag(N)[order(mean), ]
+    Gamma <- permut %*% Gamma %*% t(permut)
+    mean <- as.vector(permut %*% mean)
+    if (!is.null(sd)) sd <- as.vector(permut %*% sd)
   }
   list(Gamma = Gamma, delta = delta, mean = mean, sd = sd)
 }
@@ -266,7 +281,7 @@ mle_hmm <- function(x, N, dist, runs = 1) {
   }
   mods <- list()
   for (run in 1:runs) {
-    theta <- sample_theta(N = N, dist = dist, x = x)
+    theta <- sample_theta(N = N, dist = dist, x = x, sort_states = TRUE)
     out <- suppressWarnings(
       try(
         stats::optim(
@@ -317,33 +332,44 @@ mle_hmm <- function(x, N, dist, runs = 1) {
 #' @export
 
 decode_states <- function(x, theta, dist, N) {
+  stopifnot(is.numeric(x), is.numeric(theta))
+  stopifnot(length(dist) == 1, dist %in% c("gaussian", "gamma", "poisson"))
+  stopifnot(length(N) == 1, N == as.integer(N), N > 1)
   T <- length(x)
   par <- separate_theta(theta = theta, N = N, dist = dist)
   Gamma <- par$Gamma
   delta <- par$delta
   mean <- par$mean
   sd <- par$sd
-  allprobs <- matrix(1, N, T)
-  ### TODO: other sdds
-  for (n in 1:N) {
-    allprobs[n, ] <- stats::dgamma(
-      x, shape = mean[n]^2 / sd[n]^2, scale = sd[n]^2 / mean[n]
-    )
+  probs <- matrix(NA_real_, nrow = T, ncol = N)
+  if (dist == "gaussian") {
+    for (n in 1:N) {
+      probs[, n] <- stats::dnorm(x, mean = mean[n], sd = sd[n])
+    }
+  } else if (dist == "gamma") {
+    for (n in 1:N) {
+      probs[, n] <- stats::dgamma(
+        x, shape = mean[n]^2 / sd[n]^2, scale = sd[n]^2 / mean[n]
+      )
+    }
+  } else if (dist == "poisson") {
+    for (n in 1:N) {
+      probs[, n] <- stats::dpois(x, mean[n])
+    }
   }
-  xi <- matrix(0, N, T)
+  cond <- matrix(0, nrow = T, ncol = N)
   for (n in 1:N) {
-    xi[n, 1] <- log(delta[n]) + log(allprobs[n, 1])
+    cond[1, n] <- log(delta[n]) + log(probs[1, n])
   }
   for (t in 2:T) {
     for (n in 1:N) {
-      xi[n, t] <- max(xi[, t - 1] + log(Gamma[, n])) + log(allprobs[n, t])
+      cond[t, n] <- max(cond[t - 1, ] + log(Gamma[, n])) + log(probs[t, n])
     }
   }
-  iv <- numeric(T)
-  iv[T] <- which.max(xi[, T])
+  states <- numeric(T)
+  states[T] <- which.max(cond[T, ])
   for (t in rev(seq_len(T - 1))) {
-    iv[t] <- which.max(xi[, t] + log(Gamma[, iv[t + 1]]))
+    states[t] <- which.max(cond[t, ] + log(Gamma[, states[t + 1]]))
   }
-  return(iv)
-  ### TODO: for identification, order states by mean
+  return(states)
 }

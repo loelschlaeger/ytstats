@@ -4,7 +4,7 @@
 \alias{sample_theta}
 \title{Sample parameter vector for an HMM}
 \usage{
-sample_theta(N, dist, x = NULL)
+sample_theta(N, dist, x = NULL, sort_states = TRUE)
 }
 \arguments{
 \item{N}{An \code{integer}, the number of states. Must be greater or equal 2.}
@@ -13,6 +13,8 @@ sample_theta(N, dist, x = NULL)
 Can be \code{"gaussian"}, \code{"gamma"}, or \code{"poisson"}.}
 
 \item{x}{A \code{numeric} vector of observed data.}
+
+\item{sort_states}{Set to \code{TRUE} to sort the states by their mean.}
 }
 \value{
 A \code{numeric} parameter vector.

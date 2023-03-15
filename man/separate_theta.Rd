@@ -4,7 +4,7 @@
 \alias{separate_theta}
 \title{Separate parameter vector}
 \usage{
-separate_theta(theta, N, dist)
+separate_theta(theta, N, dist, sort_theta = TRUE)
 }
 \arguments{
 \item{theta}{A \code{numeric} parameter vector, see \code{\link{sample_theta}}.}

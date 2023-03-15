@@ -29,12 +29,12 @@ test_that("HMM data can be simulated", {
     N <- combinations[i, "N"]
     dist <- combinations[i, "dist"]
     theta <- sample_theta(N = N, dist = dist)
-    out <- simulate_hmm(T = T, N = N, theta = theta, dist = dist)
-    expect_true(is.numeric(out))
-    expect_length(out, T)
-    expect_true(is.numeric(attr(out, "states")))
-    expect_length(attr(out, "states"), T)
-    expect_true(all(attr(out, "states") %in% 1:N))
+    x <- simulate_hmm(T = T, N = N, theta = theta, dist = dist)
+    expect_true(is.numeric(x))
+    expect_length(x, T)
+    expect_true(is.numeric(attr(x, "states")))
+    expect_length(attr(x, "states"), T)
+    expect_true(all(attr(x, "states") %in% 1:N))
   }
 })
 
@@ -87,7 +87,25 @@ test_that("HMM mle can be computed", {
   }
 })
 
-
+test_that("HMM state decoding works", {
+  combinations <- expand.grid(
+    N = c(2, 3),
+    T = c(50, 100),
+    dist = c("gaussian", "gamma", "poisson"),
+    stringsAsFactors = FALSE
+  )
+  for (i in 1:nrow(combinations)) {
+    N <- combinations[i, "N"]
+    dist <- combinations[i, "dist"]
+    T <- combinations[i, "T"]
+    theta <- sample_theta(N = N, dist = dist)
+    x <- simulate_hmm(T = T, N = N, theta = theta, dist = dist)
+    states <- decode_states(x = x, theta = theta, dist = dist, N = N)
+    expect_true(is.numeric(states))
+    expect_length(states, T)
+    expect_true(all(states %in% 1:N))
+  }
+})
 
 
 

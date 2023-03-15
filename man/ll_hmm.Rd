@@ -4,7 +4,7 @@
 \alias{ll_hmm}
 \title{HMM log-likelihood}
 \usage{
-ll_hmm(theta, x, N, dist = "gaussian", neg = FALSE)
+ll_hmm(theta, x, N, dist, neg = FALSE)
 }
 \arguments{
 \item{theta}{A \code{numeric} parameter vector, see \code{\link{sample_theta}}.}

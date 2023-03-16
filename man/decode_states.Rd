@@ -26,10 +26,10 @@ Markov model.
 \examples{
 \dontrun{
 N <- 2
-dist <- "gamma"
+dist <- "poisson"
 theta <- sample_theta(N = N, dist = dist)
-x <- simulate_hmm(T = 100, N = N, theta = theta, dist = dist)
-mle <- mle_hmm(x = x, N = N, dist = dist, runs = 5)
+x <- simulate_hmm(T = 1000, N = N, theta = theta, dist = dist)
+mle <- mle_hmm(x = x, N = N, dist = dist, min_runs = 5)
 decode_states(x = x, theta = mle, dist = dist, N = N)
 attr(x, "states")
 }

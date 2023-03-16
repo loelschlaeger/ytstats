@@ -4,7 +4,7 @@
 \alias{separate_theta}
 \title{Separate parameter vector}
 \usage{
-separate_theta(theta, N, dist, sort_theta = TRUE)
+separate_theta(theta, N, dist, sort_states = TRUE)
 }
 \arguments{
 \item{theta}{A \code{numeric} parameter vector, see \code{\link{sample_theta}}.}
@@ -13,6 +13,8 @@ separate_theta(theta, N, dist, sort_theta = TRUE)
 
 \item{dist}{A \code{character} indicating the type of state-dependent distribution.
 Can be \code{"gaussian"}, \code{"gamma"}, or \code{"poisson"}.}
+
+\item{sort_states}{Set to \code{TRUE} to sort the states by their mean.}
 }
 \value{
 A \code{list} of parameters.

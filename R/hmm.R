@@ -216,12 +216,12 @@ ll_hmm <- function(theta, x, N, dist, neg = FALSE) {
 #' separate_theta(theta = theta, N = N, dist = dist)
 #' }
 
-separate_theta <- function(theta, N, dist, sort_theta = TRUE) {
+separate_theta <- function(theta, N, dist, sort_states = TRUE) {
   stopifnot(length(N) == 1, N == as.integer(N), N > 1)
   stopifnot(length(dist) == 1, dist %in% c("gaussian", "gamma", "poisson"))
   stopifnot(is.numeric(theta), is.vector(theta))
   stopifnot(length(theta) == N * (N-1) + N + ifelse(dist == "poisson", 0, N))
-  stopifnot(isTRUE(sort_theta) || isFALSE(sort_theta))
+  stopifnot(isTRUE(sort_states) || isFALSE(sort_states))
   Gamma <- diag(N)
   Gamma[!Gamma] <- theta[1:((N - 1) * N)]
   diag(Gamma) <- 2 - rowSums(Gamma)
@@ -232,7 +232,7 @@ separate_theta <- function(theta, N, dist, sort_theta = TRUE) {
   } else {
     sd <- theta[(N - 1) * N + (N + 1):(2 * N)]
   }
-  if (sort_theta) {
+  if (sort_states) {
     permut <- diag(N)[order(mean), ]
     Gamma <- permut %*% Gamma %*% t(permut)
     mean <- as.vector(permut %*% mean)
@@ -245,11 +245,18 @@ separate_theta <- function(theta, N, dist, sort_theta = TRUE) {
 #'
 #' @description 
 #' Numerical optimization of the Hidden Markov model likelihood function via 
-#' \code{\link[stats]{optim}}.
+#' \code{\link[stats]{optim}}. Optimization is initialized randomly, at least 
+#' \code{min_runs} times. Afterwards, the best run is selected. If no run yet
+#' converged, another run is tried, until one converges or \code{max_runs} is
+#' reached.
 #' 
 #' @inheritParams ll_hmm
-#' @param runs
-#' An \code{integer}, the number of randomly initialized optimization runs.
+#' @param min_runs
+#' An \code{integer}, the minimum number of randomly initialized optimization 
+#' runs.
+#' @param max_runs
+#' An \code{integer}, the maximum number of randomly initialized optimization 
+#' runs.
 #' 
 #' @return
 #' The estimated parameter vector.
@@ -260,18 +267,20 @@ separate_theta <- function(theta, N, dist, sort_theta = TRUE) {
 #' dist <- "gaussian"
 #' theta <- sample_theta(N = N, dist = dist)
 #' x <- simulate_hmm(T = 100, N = N, theta = theta, dist = dist)
-#' mle <- mle_hmm(x = x, N = N, dist = dist, runs = 5)
+#' mle <- mle_hmm(x = x, N = N, dist = dist, min_runs = 5)
 #' }
 #'
 #' @importFrom stats optim
 #'
 #' @export
 
-mle_hmm <- function(x, N, dist, runs = 1) {
+mle_hmm <- function(x, N, dist, min_runs = 1, max_runs = min_runs * 2) {
   stopifnot(is.numeric(x))
   stopifnot(length(N) == 1, N == as.integer(N), N > 1)
   stopifnot(length(dist) == 1, dist %in% c("gaussian", "gamma", "poisson"))
-  stopifnot(length(runs) == 1, runs == as.integer(runs), N >= 1)
+  stopifnot(length(min_runs) == 1, min_runs == as.integer(min_runs))
+  stopifnot(length(max_runs) == 1, max_runs == as.integer(max_runs))
+  stopifnot(min_runs >= 1, max_runs >= min_runs)
   if (dist == "gaussian") {
     lower <- c(rep(0, N * (N - 1)), rep(-Inf, N), rep(0, N))
   } else if (dist == "gamma") {
@@ -279,8 +288,8 @@ mle_hmm <- function(x, N, dist, runs = 1) {
   } else if (dist == "poisson") {
     lower <- rep(0, N * (N - 1) + N)
   }
-  mods <- list()
-  for (run in 1:runs) {
+  converged <- 0
+  mle_hmm_single <- function() {
     theta <- sample_theta(N = N, dist = dist, x = x, sort_states = TRUE)
     out <- suppressWarnings(
       try(
@@ -293,12 +302,22 @@ mle_hmm <- function(x, N, dist, runs = 1) {
       )
     ) 
     if (!inherits(out, "try-error")) {
-      mods[[run]] <- out
+      converged <<- converged + 1
+      out
+    } else {
+      NULL
+    }
+  }
+  mods <- list()
+  for (run in 1:max_runs) {
+    mods[[run]] <- mle_hmm_single()
+    if (converged > 0 && run >= min_runs) {
+      break
     }
   }
   values <- lapply(mods, `[[`, "value")
   if (length(values) == 0) {
-    stop("Estimation failed, consider increasing 'runs'.")
+    stop("Estimation failed, consider increasing 'max_runs'.")
   }
   values[sapply(values, is.null)] <- NA
   ind <- which.min(unlist(values))
@@ -319,10 +338,10 @@ mle_hmm <- function(x, N, dist, runs = 1) {
 #' @examples
 #' \dontrun{
 #' N <- 2
-#' dist <- "gamma"
+#' dist <- "poisson"
 #' theta <- sample_theta(N = N, dist = dist)
-#' x <- simulate_hmm(T = 100, N = N, theta = theta, dist = dist)
-#' mle <- mle_hmm(x = x, N = N, dist = dist, runs = 5)
+#' x <- simulate_hmm(T = 1000, N = N, theta = theta, dist = dist)
+#' mle <- mle_hmm(x = x, N = N, dist = dist, min_runs = 5)
 #' decode_states(x = x, theta = mle, dist = dist, N = N)
 #' attr(x, "states")
 #' }
@@ -336,7 +355,7 @@ decode_states <- function(x, theta, dist, N) {
   stopifnot(length(dist) == 1, dist %in% c("gaussian", "gamma", "poisson"))
   stopifnot(length(N) == 1, N == as.integer(N), N > 1)
   T <- length(x)
-  par <- separate_theta(theta = theta, N = N, dist = dist)
+  par <- separate_theta(theta = theta, N = N, dist = dist, sort_states = TRUE)
   Gamma <- par$Gamma
   delta <- par$delta
   mean <- par$mean

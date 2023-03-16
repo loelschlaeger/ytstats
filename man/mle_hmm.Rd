@@ -4,7 +4,7 @@
 \alias{mle_hmm}
 \title{Maximum likelihood estimation of an HMM}
 \usage{
-mle_hmm(x, N, dist, runs = 1)
+mle_hmm(x, N, dist, min_runs = 1, max_runs = min_runs * 2)
 }
 \arguments{
 \item{x}{A \code{numeric} vector of observed data.}
@@ -14,14 +14,21 @@ mle_hmm(x, N, dist, runs = 1)
 \item{dist}{A \code{character} indicating the type of state-dependent distribution.
 Can be \code{"gaussian"}, \code{"gamma"}, or \code{"poisson"}.}
 
-\item{runs}{An \code{integer}, the number of randomly initialized optimization runs.}
+\item{min_runs}{An \code{integer}, the minimum number of randomly initialized optimization
+runs.}
+
+\item{max_runs}{An \code{integer}, the maximum number of randomly initialized optimization
+runs.}
 }
 \value{
 The estimated parameter vector.
 }
 \description{
 Numerical optimization of the Hidden Markov model likelihood function via
-\code{\link[stats]{optim}}.
+\code{\link[stats]{optim}}. Optimization is initialized randomly, at least
+\code{min_runs} times. Afterwards, the best run is selected. If no run yet
+converged, another run is tried, until one converges or \code{max_runs} is
+reached.
 }
 \examples{
 \dontrun{
@@ -29,7 +36,7 @@ N <- 2
 dist <- "gaussian"
 theta <- sample_theta(N = N, dist = dist)
 x <- simulate_hmm(T = 100, N = N, theta = theta, dist = dist)
-mle <- mle_hmm(x = x, N = N, dist = dist, runs = 5)
+mle <- mle_hmm(x = x, N = N, dist = dist, min_runs = 5)
 }
 
 }

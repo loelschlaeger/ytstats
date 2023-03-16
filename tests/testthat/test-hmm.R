@@ -78,8 +78,8 @@ test_that("HMM mle can be computed", {
   for (dist in c("gaussian", "gamma", "poisson")) {
     N <- 2
     theta <- sample_theta(N = N, dist = dist)
-    x <- simulate_hmm(T = 50, N = N, theta = theta, dist = dist)
-    mle <- mle_hmm(x = x, N = N, dist = dist, runs = 5)
+    x <- simulate_hmm(T = 100, N = N, theta = theta, dist = dist)
+    mle <- mle_hmm(x = x, N = N, dist = dist, min_runs = 5)
     expect_true(is.numeric(mle))
     expect_true(is.vector(mle))
     expected_length <- N * (N-1) + N + ifelse(dist == "poisson", 0, N)

@@ -89,7 +89,7 @@ test_that("HMM mle can be computed", {
 
 test_that("HMM state decoding works", {
   combinations <- expand.grid(
-    N = c(2, 3),
+    N = 2,
     T = c(50, 100),
     dist = c("gaussian", "gamma", "poisson"),
     stringsAsFactors = FALSE

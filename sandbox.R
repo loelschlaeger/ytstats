@@ -24,6 +24,16 @@ library("dplyr", warn.conflicts = FALSE)
 ts <- data %>%
   group_by(day) %>%
   summarize(x = mean(viewmins)) %>%
+  pull(x) 
+theta <- mle_hmm(x = ts, N = 2, dist = "gamma", max_runs = 20)
+separate_theta(theta = theta, N = 2, dist = "gamma")
+states <- decode_states(x = ts, theta = theta, dist = "gamma", N = 2)
+plot(ts, type = "l")
+points(x = ts, col = states)
+
+ts <- data %>%
+  group_by(day) %>%
+  summarize(x = mean(viewmins)) %>%
   pull(x) %>%
   scale()
 theta <- mle_hmm(x = ts, N = 3, dist = "gaussian", max_runs = 20)

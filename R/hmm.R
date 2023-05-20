@@ -210,8 +210,8 @@ ll_hmm <- function(theta, x, N, dist, neg = FALSE) {
 #'
 #' @examples
 #' \dontrun{
-#' N <- 2
-#' dist <- "poisson"
+#' N <- 3
+#' dist <- "gamma"
 #' theta <- sample_theta(N = N, dist = dist)
 #' separate_theta(theta = theta, N = N, dist = dist)
 #' }
@@ -338,9 +338,9 @@ mle_hmm <- function(x, N, dist, min_runs = 1, max_runs = min_runs * 2) {
 #' @examples
 #' \dontrun{
 #' N <- 2
-#' dist <- "poisson"
+#' dist <- "gaussian"
 #' theta <- sample_theta(N = N, dist = dist)
-#' x <- simulate_hmm(T = 1000, N = N, theta = theta, dist = dist)
+#' x <- simulate_hmm(T = 100, N = N, theta = theta, dist = dist)
 #' mle <- mle_hmm(x = x, N = N, dist = dist, min_runs = 5)
 #' decode_states(x = x, theta = mle, dist = dist, N = N)
 #' attr(x, "states")

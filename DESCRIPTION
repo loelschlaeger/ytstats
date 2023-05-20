@@ -11,7 +11,7 @@ Authors@R: c(
            role = c("aut"))
            )
 Description: Implementation of different visualization and modeling tools for
-    YouTube time series data like viewtimes or subscribers count.
+    YouTube time series data, like viewtimes or subscribers count.
 License: GPL (>= 3)
 Encoding: UTF-8
 LazyData: true
@@ -30,10 +30,13 @@ Imports:
     tibble,
     tidyr
 Depends: 
-    R (>= 2.10)
+    R (>= 4.0.0)
 Suggests: 
     testthat (>= 3.0.0),
-    knitr
+    knitr,
+    devtools,
+    covr,
+    DT
 Config/testthat/edition: 3
 URL: https://github.com/loelschlaeger/ytstats
 BugReports: https://github.com/loelschlaeger/ytstats/issues

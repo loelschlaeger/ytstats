@@ -21,18 +21,35 @@ attributes(data)$channel # access channel data
 library("ggplot2", warn.conflicts = FALSE)
 library("dplyr", warn.conflicts = FALSE)
 
-ts <- data %>% 
-  group_by(day) %>% 
-  summarize(x = mean(viewmins)) %>% 
-  pull(x) %>% 
-  scale(center = FALSE)
-model <- fit_hmm(ts, N = 3)
-states <- decode_states(ts, model)
+ts <- data %>%
+  group_by(day) %>%
+  summarize(x = mean(viewmins)) %>%
+  pull(x) 
+theta <- mle_hmm(x = ts, N = 2, dist = "gamma", max_runs = 20)
+separate_theta(theta = theta, N = 2, dist = "gamma")
+states <- decode_states(x = ts, theta = theta, dist = "gamma", N = 2)
 plot(ts, type = "l")
-points(ts, col = states)
+points(x = ts, col = states)
 
-ts <- data$likes
-model <- fit_hmm(ts, N = 3)
-states <- decode_states(ts, model)
+ts <- data %>%
+  group_by(day) %>%
+  summarize(x = mean(viewmins)) %>%
+  pull(x) %>%
+  scale()
+theta <- mle_hmm(x = ts, N = 3, dist = "gaussian", max_runs = 20)
+separate_theta(theta = theta, N = 3, dist = "gaussian")
+states <- decode_states(x = ts, theta = theta, dist = "gaussian", N = 3)
 plot(ts, type = "l")
-points(ts, col = states)
+points(x = ts, col = states)
+
+ts <- data %>%
+  group_by(day) %>%
+  summarize(x = sum(likes)) %>%
+  pull(x) 
+theta <- mle_hmm(x = ts, N = 2, dist = "poisson", max_runs = 20)
+separate_theta(theta = theta, N = 2, dist = "poisson")
+states <- decode_states(x = ts, theta = theta, dist = "poisson", N = 2)
+plot(ts, type = "h")
+points(x = ts, col = states)
+
+

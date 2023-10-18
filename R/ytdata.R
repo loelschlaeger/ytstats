@@ -37,6 +37,15 @@
 #' @return 
 #' An object of class \code{\link{ytdata}}, which is the input \code{data}
 #' with two attributes \code{channel} and \code{videos}.
+#'
+#' @examples
+#' print(statistik_mit_lennart)
+#' summary(statistik_mit_lennart)
+#' attributes(statistik_mit_lennart)$videos  # access video data
+#' attributes(statistik_mit_lennart)$channel # access channel data
+#' 
+#' 
+#' @export
 
 ytdata <- function(data, channel, videos) {
   structure(
@@ -168,13 +177,15 @@ read_yt <- function(email, from = Sys.Date() - 10, to = Sys.Date()) {
       ### https://developers.google.com/youtube/analytics/metrics
       metrics = "views,likes,dislikes,estimatedMinutesWatched"
     ), 
-    token = ryt_token(), 
+    token = token, 
     path = "v2/reports", 
     base_url = "https://youtubeanalytics.googleapis.com/"
   ) %>% 
     gargle::request_retry(encode = "json") %>%
     gargle::response_process()
+  
   headers <- query$columnHeaders %>% sapply(`[[`, "name")
+  
   data <- query$rows %>% 
     unlist() %>% 
     matrix(ncol = length(headers), byrow = TRUE) %>%

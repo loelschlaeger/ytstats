@@ -1,9 +1,20 @@
 #' Example YouTube data
 #' 
 #' @description 
-#' Statistics from the YouTube channel "Statistik mit Lennart" for demonstration
+#' Data from the YouTube channel "Statistik mit Lennart" 
+#' (https://www.youtube.com/@statistik-mit-lennart) for demonstration.
+#' 
+#' @details
+#' Obtained via
+#' \preformatted{
+#' statisik_mit_lennart <- read_yt(
+#'   email = "oelschlaeger.lennart@gmail.com",
+#'   from = "2020-01-01",
+#'   to = "2022-09-01"
+#' )
+#' }
 #' 
 #' @format A \code{\link{ytdata}} object. 
 #' 
 #' @keywords data
-"ytdata_example"
+"statistik_mit_lennart"

@@ -3,6 +3,7 @@
 S3method(print,summary.ytdata)
 S3method(summary,ytdata)
 export(read_yt)
+export(ytdata)
 importFrom(cli,cat_bullet)
 importFrom(dplyr,"%>%")
 importFrom(dplyr,arrange)

@@ -51,3 +51,11 @@ with two attributes \code{channel} and \code{videos}.
 This function creates a \code{ytdata} object which contains YouTube data
 for modeling.
 }
+\examples{
+print(statistik_mit_lennart)
+summary(statistik_mit_lennart)
+attributes(statistik_mit_lennart)$videos  # access video data
+attributes(statistik_mit_lennart)$channel # access channel data
+
+
+}
